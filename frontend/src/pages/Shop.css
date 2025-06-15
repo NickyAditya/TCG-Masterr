@@ -1,6 +1,6 @@
 /* Shop Page Styles */
 .shop-container {
-  max-width: 1200px;
+  max-width: 100%; /* Changed from 1200px to full width */
   margin: 0 auto;
   padding: 20px;
 }
@@ -8,10 +8,10 @@
 .shop-header {
   text-align: center;
   margin-bottom: 30px;
-  padding: 20px 0;
+  padding: 30px 0; /* Increased padding for better landscape appearance */
   background: linear-gradient(120deg, #ffce00, #f26d00);
   color: white;
-  border-radius: 8px;
+  width: 100%; /* Ensure full width */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -79,12 +79,20 @@
 
 .shop-content {
   min-height: 400px;
+  max-width: 1600px; /* To match the card grid width */
+  margin: 0 auto;
+  width: 100%; /* Ensure it takes full width */
 }
 
-.loading, .no-results {
+.loading, .no-results, .error-message {
   text-align: center;
   padding: 40px;
   color: #777;
+  height: 400px; /* Add height to maintain layout even when no results */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .no-results h3 {
@@ -92,11 +100,27 @@
   margin-bottom: 10px;
 }
 
-/* Card Grid */
+.error-message h3 {
+  color: #d32f2f;
+  margin-bottom: 10px;
+}
+
+.error-message p {
+  color: #555;
+  max-width: 600px;
+}
+
+/* Card Grid using flex for more consistent layout */
 .card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 800px; /* Ensure minimum height for 2 rows of cards */
+  justify-content: space-between; /* Distribute cards evenly */
+  align-items: stretch; /* Make all cards the same height */
+  width: 100%; /* Ensure it takes full width */
 }
 
 .card-item {
@@ -106,6 +130,12 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s, box-shadow 0.3s;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 380px; /* Fixed height */
+  width: calc(25% - 15px); /* Exactly 4 cards per row with gap considered */
+  margin-bottom: 20px; /* Consistent bottom margin */
+  flex: 0 0 calc(25% - 15px); /* Don't grow or shrink */
 }
 
 .card-item:hover {
@@ -115,7 +145,7 @@
 
 .card-image {
   position: relative;
-  height: 250px;
+  height: 220px; /* Slightly reduced height to fit better in the 4-card layout */
   overflow: hidden;
   background: #f9f9f9;
   display: flex;
@@ -148,6 +178,10 @@
 
 .card-details {
   padding: 15px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .card-name {
@@ -271,7 +305,19 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
+  .card-item, .card-item.placeholder {
+    width: calc(33.33% - 14px); /* 3 cards per row */
+    flex: 0 0 calc(33.33% - 14px);
+  }
+}
+
+@media (max-width: 900px) {
+  .card-item, .card-item.placeholder {
+    width: calc(50% - 10px); /* 2 cards per row */
+    flex: 0 0 calc(50% - 10px);
+  }
+  
   .shop-filters {
     flex-direction: column;
     align-items: stretch;
@@ -284,10 +330,6 @@
   .category-tabs {
     justify-content: center;
   }
-  
-  .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  }
 }
 
 @media (max-width: 480px) {
@@ -295,9 +337,50 @@
     font-size: 2rem;
   }
   
+  .card-item, .card-item.placeholder {
+    width: 100%; /* 1 card per row */
+    flex: 0 0 100%;
+  }
+  
   .card-grid {
-    grid-template-columns: 1fr;
     max-width: 300px;
     margin: 0 auto;
   }
+}
+
+/* Add placeholder styles to maintain grid structure */
+.card-placeholder {
+  min-height: 220px;
+  visibility: hidden;
+}
+
+/* Styles for placeholder cards to maintain grid layout */
+.card-item.placeholder {
+  visibility: hidden;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  height: 380px; /* Match the height of regular cards */
+  width: calc(25% - 15px); /* Match the width of regular cards */
+  margin-bottom: 20px; /* Match the margin of regular cards */
+  flex: 0 0 calc(25% - 15px); /* Match the flex properties of regular cards */
+  border: none;
+  min-width: calc(25% - 15px); /* Ensure minimum width is maintained */
+}
+
+.card-item.placeholder:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Ensure loading spinner maintains layout */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #777;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

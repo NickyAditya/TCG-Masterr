@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../App';
+import React, { useState, useEffect } from 'react';
 import './Shop.css'; // We'll reuse some of the Shop styles
 
 function Inventory() {
-  const { user } = useContext(AuthContext);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
 

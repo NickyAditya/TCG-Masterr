@@ -1,67 +1,128 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './Shop.css';
-
-// Sample card data (in a real app, you would fetch this from an API)
-const cardData = {
-  pokemon: [
-    { id: 1, name: 'Charizard', price: 199.99, image: '/images/cards/pokemon/charizard1.jpg', rarity: 'Rare', set: 'Base Set', inStock: true },
-    { id: 2, name: 'Pikachu', price: 49.99, image: '/images/cards/pokemon/pikachu1.jpg', rarity: 'Common', set: 'Base Set', inStock: true },
-    { id: 3, name: 'Mewtwo', price: 129.99, image: '/images/cards/pokemon/mewtwo.jpg', rarity: 'Rare', set: 'Base Set', inStock: true },
-    { id: 4, name: 'Blastoise', price: 149.99, image: '/images/cards/pokemon/blastoise1.png', rarity: 'Rare', set: 'Base Set', inStock: false },
-    { id: 5, name: 'Venusaur', price: 139.99, image: '/images/cards/pokemon/venusaur1.jpg', rarity: 'Rare', set: 'Base Set', inStock: true },
-  ],
-  yugioh: [
-    { id: 1, name: 'Blue-Eyes White Dragon', price: 89.99, image: '/images/cards/yugioh/blueeyes.webp', rarity: 'Ultra Rare', set: 'Legend of Blue Eyes', inStock: true },
-    { id: 2, name: 'Dark Magician', price: 79.99, image: '/images/cards/yugioh/darkmagic.jpg', rarity: 'Ultra Rare', set: 'Legend of Blue Eyes', inStock: true },
-    { id: 3, name: 'Exodia the Forbidden One', price: 149.99, image: '/images/cards/yugioh/exodia.jpeg', rarity: 'Ultra Rare', set: 'Legend of Blue Eyes', inStock: false },
-    { id: 4, name: 'Red-Eyes Black Dragon', price: 69.99, image: '/images/cards/yugioh/redeyes.jpg', rarity: 'Ultra Rare', set: 'Metal Raiders', inStock: true },
-    { id: 5, name: 'Summoned Skull', price: 29.99, image: '/images/cards/yugioh/summoned-skull.jpg', rarity: 'Ultra Rare', set: 'Metal Raiders', inStock: true },
-    { id: 6, name: 'Black Luster Soldier', price: 99.99, image: '/images/cards/yugioh/black-luster-soldier.jpg', rarity: 'Ultra Rare', set: 'Invasion of Chaos', inStock: true }
-  ],
-  mtg: [
-    { id: 1, name: 'Black Lotus', price: 9999.99, image: '/images/cards/mtg/black-lotus.jpg', rarity: 'Mythic Rare', set: 'Alpha', inStock: false },
-    { id: 2, name: 'Jace, the Mind Sculptor', price: 149.99, image: '/images/cards/mtg/jace.jpg', rarity: 'Mythic Rare', set: 'Worldwake', inStock: true },
-    { id: 3, name: 'Liliana of the Veil', price: 129.99, image: '/images/cards/mtg/liliana.jpg', rarity: 'Mythic Rare', set: 'Innistrad', inStock: true },
-    { id: 4, name: 'Tarmogoyf', price: 89.99, image: '/images/cards/mtg/tarmogoyf.jpg', rarity: 'Mythic Rare', set: 'Future Sight', inStock: true },
-    { id: 5, name: 'Force of Will', price: 119.99, image: '/images/cards/mtg/force-of-will.jpg', rarity: 'Rare', set: 'Alliances', inStock: true },
-    { id: 6, name: 'Mox Sapphire', price: 7999.99, image: '/images/cards/mtg/mox-sapphire.jpg', rarity: 'Rare', set: 'Beta', inStock: false }
-  ]
-};
 
 function Shop() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Simulate loading cards from an API
+  const [error, setError] = useState('');
+    // Initial fetch when component mounts - only run once
   useEffect(() => {
+    fetchCards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+    const fetchCards = async () => {
     setLoading(true);
+    setError(''); // Clear any previous errors
     
-    setTimeout(() => {
-      let filteredCards = [];
+    try {
+      const response = await axios.get('http://localhost:5000/api/cards');
       
-      if (selectedCategory === 'all') {
-        filteredCards = [
-          ...cardData.pokemon.map(card => ({ ...card, category: 'pokemon' })),
-          ...cardData.yugioh.map(card => ({ ...card, category: 'yugioh' })),
-          ...cardData.mtg.map(card => ({ ...card, category: 'mtg' }))
-        ];
-      } else {
-        filteredCards = cardData[selectedCategory].map(card => ({ ...card, category: selectedCategory }));
-      }
+      // Process the cards from the database
+      const dbCards = response.data;
       
-      // Apply search filter if query exists
-      if (searchQuery) {
-        filteredCards = filteredCards.filter(card => 
-          card.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
+      // Store all cards so we can filter without making API calls
+      setAllCards(dbCards);
       
-      setCards(filteredCards);
+      // Apply filters based on the selected category and search query
+      filterCards(dbCards);
+    } catch (err) {
+      console.error('Error fetching cards:', err);
+      setError('Failed to load cards. Please check your database connection or contact support.');
       setLoading(false);
-    }, 500); // Simulated delay to show loading state
+      setCards([]); // Clear cards on error
+    }
+  };
+  // Store all cards in state so we can filter them without making API calls
+  const [allCards, setAllCards] = useState([]);
+
+  // Fetch cards only once on component mount
+  useEffect(() => {
+    fetchCards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  // Filter cards when category or search changes
+  useEffect(() => {
+    if (allCards.length > 0) {
+      setLoading(true);
+      // Use setTimeout to prevent UI freezing during filtering
+      setTimeout(() => {
+        filterCards(allCards);
+      }, 100);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, searchQuery]);
+  const filterCards = (allDbCards) => {
+    // Don't need to set loading again during filtering if we're already in loading state
+    
+    // Convert database cards to the format expected by our UI
+    const formattedCards = allDbCards.map(card => ({
+      id: card.id,
+      name: card.name,
+      price: parseFloat(card.price),
+      image: card.image || '/images/cards/card-placeholder.jpg',
+      rarity: card.rarity || 'Common',
+      set: card.card_set || '',
+      inStock: card.stock > 0,
+      stockCount: card.stock,
+      category: card.game // 'pokemon', 'yugioh', or 'mtg'
+    }));
+    
+    let filteredCards = [];
+    
+    // Apply category filter
+    if (selectedCategory === 'all') {
+      filteredCards = formattedCards;
+    } else {
+      filteredCards = formattedCards.filter(card => card.category === selectedCategory);
+    }
+    
+    // Apply search filter
+    if (searchQuery) {
+      filteredCards = filteredCards.filter(card => 
+        card.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Always ensure we have at least 8 cards (2 rows of 4) for consistent layout
+    // or a multiple of 4 cards to fill complete rows
+    const cardsPerRow = 4;
+    const minRows = 2;
+    
+    // Calculate how many cards we need to have complete rows
+    const totalRows = Math.max(minRows, Math.ceil(filteredCards.length / cardsPerRow));
+    const targetCardCount = totalRows * cardsPerRow;
+    
+    // Create final array with active cards first
+    let finalCards = [...filteredCards];
+    
+    // Add empty placeholder cards if needed to complete rows
+    if (finalCards.length < targetCardCount) {
+      // How many placeholders do we need?
+      const placeholdersNeeded = targetCardCount - finalCards.length;
+      
+      // Add placeholders
+      for (let i = 0; i < placeholdersNeeded; i++) {
+        finalCards.push({ 
+          id: `placeholder-${i}`, 
+          name: '', 
+          price: 0, 
+          image: '',
+          rarity: '',
+          set: '',
+          inStock: false,
+          category: 'placeholder',
+          isPlaceholder: true
+        });
+      }
+    }
+    
+    setCards(finalCards);
+    setLoading(false);
+  };
   
   // Handle category selection
   const handleCategoryChange = (category) => {
@@ -77,12 +138,11 @@ function Shop() {
   const handleImageError = (e) => {
     e.target.src = '/images/cards/card-placeholder.jpg';
   };
-
   return (
     <div className="shop-container">
       <div className="shop-header">
         <h1>TCG Card Shop</h1>
-        <p>Browse our selection of trading cards</p>
+        <p>Browse our premium selection of trading cards from Pokémon, Yu-Gi-Oh!, and Magic: The Gathering</p>
       </div>
       
       <div className="shop-filters">
@@ -124,10 +184,14 @@ function Shop() {
           />
         </div>
       </div>
-      
-      <div className="shop-content">
+        <div className="shop-content">
         {loading ? (
           <div className="loading">Loading cards...</div>
+        ) : error ? (
+          <div className="error-message">
+            <h3>Error loading cards</h3>
+            <p>{error}</p>
+          </div>
         ) : cards.length === 0 ? (
           <div className="no-results">
             <h3>No cards found</h3>
@@ -135,41 +199,52 @@ function Shop() {
           </div>
         ) : (
           <div className="card-grid">
+            {/* Fill with actual cards and placeholders to maintain consistent layout */}
             {cards.map(card => (
-              <div className="card-item" key={`${card.category}-${card.id}`}>
-                <div className="card-image">
-                  <img 
-                    src={card.image} 
-                    alt={card.name}
-                    onError={handleImageError} 
-                  />
-                  {!card.inStock && <span className="out-of-stock">Out of Stock</span>}
-                </div>
-                <div className="card-details">
-                  <h3 className="card-name">{card.name}</h3>
-                  <div className="card-meta">
-                    <span className="card-set">{card.set}</span>
-                    <span className={`card-rarity ${card.rarity.toLowerCase().replace(' ', '-')}`}>
-                      {card.rarity}
+              card.isPlaceholder ? (
+                // Placeholder cards - invisible but maintain grid structure
+                <div 
+                  className="card-item placeholder" 
+                  key={`placeholder-${card.id}`} 
+                  aria-hidden="true"
+                ></div>
+              ) : (
+                // Real cards with content
+                <div className="card-item" key={`${card.category}-${card.id}`}>
+                  <div className="card-image">
+                    <img 
+                      src={card.image} 
+                      alt={card.name}
+                      onError={handleImageError} 
+                      loading="lazy"
+                    />
+                    {!card.inStock && <span className="out-of-stock">Out of Stock</span>}
+                  </div>
+                  <div className="card-details">
+                    <h3 className="card-name">{card.name}</h3>
+                    <div className="card-meta">
+                      <span className="card-set">{card.set}</span>                      <span className={`card-rarity ${card.rarity ? card.rarity.toLowerCase().replace(' ', '-') : 'common'}`}>
+                        {card.rarity || 'Common'}
+                      </span>
+                    </div>
+                    <div className="card-purchase">
+                      <span className="card-price">${card.price.toFixed(2)}</span>
+                      <button 
+                        className="add-to-cart" 
+                        disabled={!card.inStock}
+                      >
+                        {card.inStock ? 'Add to Cart' : 'Sold Out'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="card-game-tag">
+                    <span className={`game-tag ${card.category}`}>
+                      {card.category === 'pokemon' ? 'Pokémon' : 
+                       card.category === 'yugioh' ? 'Yu-Gi-Oh!' : 'MTG'}
                     </span>
                   </div>
-                  <div className="card-purchase">
-                    <span className="card-price">${card.price.toFixed(2)}</span>
-                    <button 
-                      className="add-to-cart" 
-                      disabled={!card.inStock}
-                    >
-                      {card.inStock ? 'Add to Cart' : 'Sold Out'}
-                    </button>
-                  </div>
                 </div>
-                <div className="card-game-tag">
-                  <span className={`game-tag ${card.category}`}>
-                    {card.category === 'pokemon' ? 'Pokémon' : 
-                     card.category === 'yugioh' ? 'Yu-Gi-Oh!' : 'MTG'}
-                  </span>
-                </div>
-              </div>
+              )
             ))}
           </div>
         )}

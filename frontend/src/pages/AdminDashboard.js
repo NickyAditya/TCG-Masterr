@@ -425,7 +425,7 @@ function CardManagement() {
       
       if (modalMode === 'add') {
         // Add new card via API
-        const response = await axios.post('http://localhost:5000/api/cards', cardData);
+        await axios.post('http://localhost:5000/api/cards', cardData);
         // Refresh the card list
         fetchCards();
       } else if (modalMode === 'edit') {
