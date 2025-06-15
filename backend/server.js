@@ -4,6 +4,7 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userRoutes = require("./routes/users");
+const cardRoutes = require("./routes/cards");
 
 const app = express();
 app.use(cors());
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // API Routes
 app.use("/api/users", userRoutes);
+app.use("/api/cards", cardRoutes);
 
 const db = mysql.createConnection({
   host: "localhost",
@@ -44,7 +46,13 @@ app.post("/api/login", (req, res) => {
 
     const token = jwt.sign({ id: user.id, role: user.role }, "SECRET123", { expiresIn: "1h" });
 
-    res.json({ token, role: user.role });
+    res.json({ 
+      token, 
+      role: user.role,
+      id: user.id,
+      username: user.username,
+      email: user.email
+    });
   });
 });
 

@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import Auth from './pages/Auth';
 import AdminDashboard from './pages/AdminDashboard';
 import Shop from './pages/Shop';
+import Inventory from './pages/Inventory';
 
 // Create a context for user authentication state
 export const AuthContext = createContext(null);
@@ -120,13 +121,22 @@ function App() {
               <Footer />
             </>
           } />
-          
-          <Route path="/shop" element={
+            <Route path="/shop" element={
             <>
               {user?.role !== 'admin' && <Navbar />}
               <Shop />
               <Footer />
             </>
+          } />
+          
+          <Route path="/inventory" element={
+            <ProtectedRoute element={
+              <>
+                <Navbar />
+                <Inventory />
+                <Footer />
+              </>
+            } />
           } />
           
           {/* Add a catch-all redirect */}

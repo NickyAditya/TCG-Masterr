@@ -109,9 +109,51 @@ body {
   font-weight: bold;
 }
 
+.user-dropdown-container {
+  position: relative;
+}
+
 .user-greeting {
   color: #ffce00;
   font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.user-greeting:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  min-width: 150px;
+  z-index: 1000;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.dropdown-item {
+  padding: 10px 15px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: block;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background-color: #3a3a3a;
+  color: #ffce00;
 }
 
 /* Responsive Design */

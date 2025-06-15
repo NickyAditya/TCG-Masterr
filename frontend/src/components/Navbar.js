@@ -6,6 +6,7 @@ import { AuthContext } from '../App'; // Import the context
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
   // Get user state from context
   const { user, setUser } = useContext(AuthContext);
@@ -43,6 +44,21 @@ function Navbar() {
       window.removeEventListener('userLogin', handleUserLogin);
     };
   }, []);
+  
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const dropdownContainer = document.querySelector('.user-dropdown-container');
+      if (dropdownContainer && !dropdownContainer.contains(event.target) && isDropdownOpen) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -54,6 +70,10 @@ function Navbar() {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+  
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
   return (
     <nav className="navbar">
@@ -63,18 +83,26 @@ function Navbar() {
           {isMenuOpen ? '✕' : '☰'}
         </button>
       </div>
-      
-      <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
+        <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
         <li><Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link></li>
         <li><Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link></li>
         
         {currentUser ? (
           <>
-            <li className="user-greeting">Hi, {currentUser.email}</li>
+            <li className="user-dropdown-container">
+              <div className="user-greeting" onClick={toggleDropdown}>
+                Hello, {currentUser.username || currentUser.email}
+                <i className='bx bx-chevron-down'></i>
+              </div>              {isDropdownOpen && (
+                <div className="user-dropdown">
+                  <Link to="/inventory" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>Inventory</Link>
+                  <div className="dropdown-item" onClick={handleLogout}>Logout</div>
+                </div>
+              )}
+            </li>
             {currentUser.role === 'admin' && (
               <li><Link to="/admin" onClick={() => setIsMenuOpen(false)}>Admin Dashboard</Link></li>
             )}
-            <li><button className="logout-btn" onClick={handleLogout}>Logout</button></li>
           </>
         ) : (
           <li><Link to="/login" onClick={() => setIsMenuOpen(false)} className="login-btn">Login</Link></li>

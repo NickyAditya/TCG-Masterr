@@ -208,6 +208,12 @@
   margin-top: 10px;
 }
 
+.inventory-details {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
 .card-price {
   font-size: 1.2rem;
   font-weight: 700;
