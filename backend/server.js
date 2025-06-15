@@ -5,14 +5,23 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userRoutes = require("./routes/users");
 const cardRoutes = require("./routes/cards");
+const inventoryRoutes = require("./routes/inventory");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Request logger middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // API Routes
 app.use("/api/users", userRoutes);
 app.use("/api/cards", cardRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/users/inventory", inventoryRoutes); // Endpoint untuk akses inventory user
 
 const db = mysql.createConnection({
   host: "localhost",
