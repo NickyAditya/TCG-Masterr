@@ -60,7 +60,8 @@ app.post("/api/login", (req, res) => {
       role: user.role,
       id: user.id,
       username: user.username,
-      email: user.email
+      email: user.email,
+      balance: user.balance || 0
     });
   });
 });

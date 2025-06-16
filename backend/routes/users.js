@@ -13,7 +13,7 @@ const db = mysql.createConnection({
 
 // Get all users
 router.get('/', (req, res) => {
-  const sql = "SELECT id, username, email, role FROM users";
+  const sql = "SELECT id, username, email, role, balance FROM users";
   
   db.query(sql, (err, results) => {
     if (err) {
@@ -26,7 +26,7 @@ router.get('/', (req, res) => {
 
 // Get a single user by ID
 router.get('/:id', (req, res) => {
-  const sql = "SELECT id, username, email, role FROM users WHERE id = ?";
+  const sql = "SELECT id, username, email, role, balance FROM users WHERE id = ?";
   
   db.query(sql, [req.params.id], (err, results) => {
     if (err) {
@@ -40,6 +40,52 @@ router.get('/:id', (req, res) => {
     
     res.json(results[0]);
   });
+});
+
+// Update user balance
+router.post('/:id/balance', (req, res) => {
+  const userId = req.params.id;
+  const { amount } = req.body;
+  
+  if (!amount || isNaN(amount) || amount < 100000) {
+    return res.status(400).json({ message: 'Valid amount required (minimum Rp. 100,000)' });
+  }
+  
+  // Get current balance first
+  db.query(
+    "SELECT balance FROM users WHERE id = ?",
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching user balance:', err);
+        return res.status(500).json({ message: 'Error updating balance' });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      const currentBalance = parseFloat(results[0].balance) || 0;
+      const newBalance = currentBalance + parseFloat(amount);
+      
+      // Update balance
+      db.query(
+        "UPDATE users SET balance = ? WHERE id = ?",
+        [newBalance, userId],
+        (err, result) => {
+          if (err) {
+            console.error('Error updating balance:', err);
+            return res.status(500).json({ message: 'Error updating balance' });
+          }
+          
+          res.json({ 
+            message: 'Balance updated successfully',
+            balance: newBalance
+          });
+        }
+      );
+    }
+  );
 });
 
 // Create a new user

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(100) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   role ENUM('user', 'admin') DEFAULT 'user',
+  balance DECIMAL(12,2) DEFAULT 0.00,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -25,6 +26,7 @@ module.exports = {
     email: 'VARCHAR(100) NOT NULL UNIQUE', 
     password: 'VARCHAR(255) NOT NULL',
     role: "ENUM('user', 'admin') DEFAULT 'user'",
+    balance: 'DECIMAL(12,2) DEFAULT 0.00',
     created_at: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
   }
 };
