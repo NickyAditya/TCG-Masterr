@@ -316,6 +316,9 @@ function CardManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add'); // 'add', 'edit', 'delete'
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const [currentCard, setCurrentCard] = useState({
     id: '',
     name: '',
@@ -363,8 +366,16 @@ function CardManagement() {
       setLoading(false);
     }
   };
-  
-  const openAddModal = () => {
+    const openAddModal = () => {
+    // Reset uploaded file state
+    setUploadedFile(null);
+    setUploadError('');
+    
+    // Clean up any existing image preview
+    if (currentCard.imagePreview) {
+      URL.revokeObjectURL(currentCard.imagePreview);
+    }
+    
     setCurrentCard({
       id: '',
       name: '',
@@ -373,14 +384,32 @@ function CardManagement() {
       rarity: '',
       price: 0,
       stock: 0,
-      image: ''
+      image: '',
+      imagePreview: null
     });
     setModalMode('add');
     setIsModalOpen(true);
-  };
-  
-  const openEditModal = (card) => {
-    setCurrentCard({...card});
+  };    const openEditModal = (card) => {
+    // Reset uploaded file state
+    setUploadedFile(null);
+    setUploadError('');
+    
+    // Clean up any existing image preview
+    if (currentCard.imagePreview) {
+      URL.revokeObjectURL(currentCard.imagePreview);
+    }
+      // Set current card with existing data
+    setCurrentCard({
+      id: card.id,
+      name: card.name,
+      game: card.game,
+      set: card.set,
+      rarity: card.rarity,
+      price: card.price,
+      stock: card.stock,
+      image: card.image,
+      imagePreview: null // Will use existing image path until a new file is selected
+    });
     setModalMode('edit');
     setIsModalOpen(true);
   };
@@ -400,8 +429,7 @@ function CardManagement() {
   const closeModal = () => {
     setIsModalOpen(false);
   };
-  
-  const handleInputChange = (e) => {
+    const handleInputChange = (e) => {
     const { name, value } = e.target;
     
     // Handle number inputs
@@ -417,10 +445,70 @@ function CardManagement() {
       }));
     }
   };
-    const handleSubmit = async (e) => {
+  
+  // Handle file input change for image upload
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setUploadedFile(e.target.files[0]);
+      
+      // Create a preview URL
+      const previewUrl = URL.createObjectURL(e.target.files[0]);
+      setCurrentCard(prevState => ({
+        ...prevState,
+        imagePreview: previewUrl
+      }));
+    }
+  };
+  // This functionality is now handled directly in handleSubmit
+  const handleFileUpload = () => {
+    // This function is now deprecated, but we're keeping it for now to avoid changing any existing references
+    console.log("Image upload happens automatically when saving the card.");
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setUploadError('');
     
-    try {      // Prepare the card data for API
+    try {
+      // Automatically handle image upload if a file was selected
+      if (uploadedFile) {
+        try {
+          setUploadError('Uploading image...');
+          
+          // Make sure the game is always lowercase to match folder names
+          const category = currentCard.game ? currentCard.game.toLowerCase() : 'misc';
+          console.log(`Uploading card image to category: ${category}`);
+          
+          const formData = new FormData();
+          formData.append('cardImage', uploadedFile);
+          formData.append('category', category);
+          
+          const uploadResponse = await axios.post('http://localhost:5000/api/uploads', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+            if (uploadResponse.data.success) {
+            console.log('Image upload successful:', uploadResponse.data);
+            // Update the image path in the current card data
+            setCurrentCard(prevCard => ({
+              ...prevCard,
+              image: uploadResponse.data.filePath
+            }));
+            // Update the image path for the form submission
+            currentCard.image = uploadResponse.data.filePath;
+            
+            setUploadError(`Successfully uploaded to ${uploadResponse.data.category} folder`);
+          } else {
+            console.error('Image upload failed:', uploadResponse.data);
+            setUploadError('Image upload failed. Card will be saved without an image.');
+          }
+        } catch (uploadErr) {
+          console.error('Error uploading image:', uploadErr);
+          setUploadError('Error uploading image. Card will be saved without an image.');
+        }
+      }
+      
+      // Prepare the card data for API
       const cardData = {
         name: currentCard.name,
         game: currentCard.game,
@@ -430,15 +518,18 @@ function CardManagement() {
         stock: currentCard.stock,
         image: currentCard.image
       };
-      
-      setIsSubmitting(true); // Start submitting
-      
+        // Now save the card with the uploaded image path (if available)
       if (modalMode === 'add') {
         // Add new card via API
         await axios.post('http://localhost:5000/api/cards', cardData);
         // Refresh the card list
         fetchCards();
       } else if (modalMode === 'edit') {
+        // If we're in edit mode and no new file was selected, show a message about keeping the existing image
+        if (!uploadedFile && currentCard.image && !uploadError) {
+          setUploadError('Keeping existing image');
+        }
+        
         // Update existing card via API
         await axios.put(`http://localhost:5000/api/cards/${currentCard.id}`, cardData);
         // Refresh the card list
@@ -504,10 +595,9 @@ function CardManagement() {
                   <th>ID</th>
                   <th>Image</th>
                   <th>Name</th>
-                  <th>Game</th>
-                  <th>Set</th>
+                  <th>Game</th>                  <th>Set</th>
                   <th>Rarity</th>
-                  <th>Price ($)</th>
+                  <th>Price (Rp.)</th>
                   <th>Stock</th>
                   <th>Actions</th>
                 </tr>
@@ -528,13 +618,12 @@ function CardManagement() {
                           {getGameDisplayName(card.game)}
                         </span>
                       </td>
-                      <td>{card.set}</td>
-                      <td>
+                      <td>{card.set}</td>                      <td>
                         <span className={`rarity-badge ${card.rarity.toLowerCase().replace(' ', '-')}`}>
                           {card.rarity}
                         </span>
                       </td>
-                      <td>${card.price.toFixed(2)}</td>
+                      <td>Rp. {card.price.toLocaleString('id-ID')}</td>
                       <td>
                         <span className={`stock-badge ${card.stock === 0 ? 'out-of-stock' : ''}`}>
                           {card.stock}
@@ -570,14 +659,13 @@ function CardManagement() {
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
-            <div className="modal-header">
-              <h3>
+            <div className="modal-header">              <h3>
                 {modalMode === 'add' && 'Add New Card'}
                 {modalMode === 'edit' && 'Edit Card'}
                 {modalMode === 'delete' && 'Delete Card'}
                 {modalMode === 'stock' && 'Update Stock'}
               </h3>
-              <button className="modal-close" onClick={closeModal}>×</button>
+              <button className="modal-close" onClick={closeModal} title="Close Modal">×</button>
             </div>
             
             <form onSubmit={handleSubmit}>
@@ -635,13 +723,11 @@ function CardManagement() {
                           onChange={handleInputChange}
                           required
                         />
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="price">Price ($)</label>
+                      </div>                      <div className="form-group">
+                        <label htmlFor="price">Price (Rp.)</label>
                         <input
                           type="number"
-                          step="0.01"
+                          step="1000"
                           id="price"
                           name="price"
                           value={currentCard.price}
@@ -649,16 +735,70 @@ function CardManagement() {
                           required
                         />
                       </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="image">Image URL</label>
-                        <input
-                          type="text"
-                          id="image"
-                          name="image"
-                          value={currentCard.image}
-                          onChange={handleInputChange}
-                        />
+                        <div className="form-group">
+                        <label htmlFor="image">Card Image</label>                        <div className="image-upload-container">
+                          {/* Image preview section */}
+                          {(currentCard.image || currentCard.imagePreview) && (
+                            <div className="image-preview">
+                              <img 
+                                src={currentCard.imagePreview || currentCard.image} 
+                                alt="Card preview" 
+                                onError={(e) => e.target.src = '/images/cards/card-placeholder.jpg'} 
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Upload controls */}
+                          <div className="upload-controls">
+                            <input
+                              type="file"
+                              id="cardImage"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                              className="file-input"
+                            />
+                            <label htmlFor="cardImage" className="file-input-label">
+                              {uploadedFile ? 'Change Image' : modalMode === 'edit' && currentCard.image ? 'Change Image' : 'Select Image'}
+                            </label>
+                            
+                            {/* Show selected file info */}
+                            {uploadedFile && (
+                              <span className="file-selected">
+                                Image selected: {uploadedFile.name}
+                                <p className="upload-info">Image will be uploaded when you save the card</p>
+                              </span>
+                            )}
+                            
+                            {/* Show current image info when in edit mode */}
+                            {modalMode === 'edit' && currentCard.image && !uploadedFile && (
+                              <span className="file-selected">
+                                <p className="upload-info">Current image: {currentCard.image.split('/').pop()}</p>
+                                <p className="upload-info">Select a new image to replace it</p>
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Error/success message */}
+                          {uploadError && (
+                            <div className={`upload-error ${uploadError.includes('Successfully') ? 'success' : ''}`}>
+                              {uploadError}
+                            </div>
+                          )}
+                          
+                          {/* Image path display */}
+                          {currentCard.image && !uploadedFile && (
+                            <div className="image-path">
+                              <input
+                                type="text"
+                                id="image"
+                                name="image"
+                                value={currentCard.image}
+                                onChange={handleInputChange}
+                                readOnly
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </>
                   )}
@@ -713,11 +853,15 @@ function CardManagement() {
                   <p>This action cannot be undone.</p>
                 </div>
               )}
-              
-              <div className="modal-footer">
-                <button type="button" className="btn cancel-btn" onClick={closeModal}>
+                <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn cancel-btn" 
+                  onClick={closeModal}
+                >
                   Cancel
-                </button>                <button 
+                </button>
+                <button 
                   type="submit" 
                   className={`btn ${
                     modalMode === 'delete' ? 'delete-btn' : 

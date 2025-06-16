@@ -3,10 +3,12 @@ const mysql = require("mysql2");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const path = require("path");
 const userRoutes = require("./routes/users");
 const cardRoutes = require("./routes/cards");
 const inventoryRoutes = require("./routes/inventory");
 const transactionRoutes = require("./routes/transactions");
+const uploadRoutes = require("./routes/uploads");
 
 const app = express();
 app.use(cors());
@@ -24,6 +26,7 @@ app.use("/api/cards", cardRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/users/inventory", inventoryRoutes); // Endpoint untuk akses inventory user
 app.use("/api/transactions", transactionRoutes); // Endpoint untuk akses log transaksi
+app.use("/api/uploads", uploadRoutes); // Endpoint untuk upload gambar
 
 const db = mysql.createConnection({
   host: "localhost",
