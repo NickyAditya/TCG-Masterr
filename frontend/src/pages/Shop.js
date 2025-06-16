@@ -15,6 +15,8 @@ function Shop() {
   const [cartTotal, setCartTotal] = useState(0);
   // Get user context
   const { user, setUser } = useContext(AuthContext);
+  // Success Popup state
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -259,8 +261,8 @@ function Shop() {
       window.removeEventListener('userLogout', handleUserLogout);
     };
   }, []);
-
   // Fungsi untuk memverifikasi login ulang secara manual
+  // eslint-disable-next-line no-unused-vars
   const checkLoginStatus = () => {
     const userData = localStorage.getItem('user');
     if (userData) {
@@ -318,7 +320,9 @@ function Shop() {
     }
     
     console.log('User verification passed:', userObj.username);
-    setIsCheckingOut(true);try {
+    setIsCheckingOut(true);
+    
+    try {
       // Ambil data user yang paling update dari localStorage
       const currentUserData = localStorage.getItem('user');
       let currentUserId = userId;
@@ -353,7 +357,9 @@ function Shop() {
 
       // Kirim request ke server
       // Coba gunakan endpoint inventory langsung
-      const response = await axios.post('http://localhost:5000/api/inventory/add', orderData);        if (response.status === 200 || response.status === 201) {
+      const response = await axios.post('http://localhost:5000/api/inventory/add', orderData);
+      
+      if (response.status === 200 || response.status === 201) {
         // Jika berhasil, kosongkan cart dan tampilkan pesan sukses
         setCheckoutMessage('Pembelian berhasil! Kartu telah ditambahkan ke inventory Anda');
         clearCart(); // Kosongkan cart setelah checkout berhasil
@@ -376,10 +382,19 @@ function Shop() {
           console.log('Updated user balance to:', updatedBalance);
         }
         
+        // Show success popup notification
+        setShowSuccessPopup(true);
+        
         setTimeout(() => {
           setCartOpen(false); // Tutup modal cart
           setCheckoutMessage('');
-        }, 3000);}
+        }, 3000);
+
+        // Auto-hide success popup after 3 seconds
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+        }, 3000);
+      }
     } catch (err) {
       console.error('Checkout error:', err);
       console.error('Error details:', err.response?.data || 'No response data');
@@ -410,6 +425,14 @@ function Shop() {
 
   return (
     <div className="shop-container">
+      {/* Success Popup Notification */}
+      {showSuccessPopup && (
+        <div className="success-popup">
+          <span className="icon">✓</span>
+          <span>Kartu berhasil dibeli!</span>
+        </div>
+      )}
+      
       <div className="shop-header">
         <h1>TCG Card Shop</h1>
         <p>Browse our premium selection of trading cards from Pokémon, Yu-Gi-Oh!, and Magic: The Gathering</p>

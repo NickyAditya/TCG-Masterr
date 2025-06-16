@@ -72,8 +72,8 @@ function Inventory() {
 
     fetchInventory();
   }, [isLoggedIn, userId]);
-
   // Fungsi untuk memverifikasi login ulang secara manual
+  // eslint-disable-next-line no-unused-vars
   const checkLoginStatus = () => {
     const userData = localStorage.getItem('user');
     if (userData) {

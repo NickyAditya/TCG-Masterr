@@ -705,6 +705,50 @@
   display: block;
 }
 
+/* Success Popup Notification */
+.success-popup {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 5px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease-out forwards, fadeOut 0.5s ease-out 2.5s forwards;
+}
+
+.success-popup .icon {
+  font-size: 20px;
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateX(-50%) translateY(-50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 /* Responsive Cart Styles */
 @media (max-width: 480px) {
   .cart-sidebar {

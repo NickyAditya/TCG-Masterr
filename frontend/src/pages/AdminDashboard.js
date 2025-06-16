@@ -317,6 +317,8 @@ function CardManagement() {
   const [modalMode, setModalMode] = useState('add'); // 'add', 'edit', 'delete'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  // We're not tracking upload state directly anymore, but keeping vars for compatibility
+  // eslint-disable-next-line no-unused-vars
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [currentCard, setCurrentCard] = useState({
@@ -458,12 +460,12 @@ function CardManagement() {
         imagePreview: previewUrl
       }));
     }
-  };
-  // This functionality is now handled directly in handleSubmit
+  };  // This functionality is now handled directly in handleSubmit
+  // eslint-disable-next-line no-unused-vars
   const handleFileUpload = () => {
     // This function is now deprecated, but we're keeping it for now to avoid changing any existing references
     console.log("Image upload happens automatically when saving the card.");
-  };  const handleSubmit = async (e) => {
+  };const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setUploadError('');
@@ -703,27 +705,42 @@ function CardManagement() {
                       
                       <div className="form-group">
                         <label htmlFor="set">Card Set</label>
-                        <input
+                        <select
                           type="text"
                           id="set"
                           name="set"
                           value={currentCard.set}
                           onChange={handleInputChange}
                           required
-                        />
+                        >
+                          <option value="base">Base Set</option>
+                          <option value="alpha">Alpha</option>
+                          <option value="beta">Beta</option>
+                          <option value="lob">Legend Of Blue (LOB)</option>
+                          <option value="mrd">Metal Raiders (MRD)</option>
+                          <option value="srl">Spell Ruler (SRL)</option>
+                          <option value="swrd">Sword & Shield</option>
+                        </select>
                       </div>
                       
                       <div className="form-group">
                         <label htmlFor="rarity">Rarity</label>
-                        <input
+                        <select
                           type="text"
                           id="rarity"
                           name="rarity"
                           value={currentCard.rarity}
                           onChange={handleInputChange}
                           required
-                        />
-                      </div>                      <div className="form-group">
+                        >
+                          <option value="common">Common</option>
+                          <option value="uncommon">Uncommon</option>
+                          <option value="rare">Rare</option>
+                          <option value="ultra-rare">Ultra Rare</option>
+                          <option value="mythic-rare">Mythic Rare</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
                         <label htmlFor="price">Price (Rp.)</label>
                         <input
                           type="number"

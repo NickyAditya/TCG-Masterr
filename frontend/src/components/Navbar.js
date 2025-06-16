@@ -59,10 +59,10 @@ function Navbar() {
       // Set up a periodic refresh every 60 seconds
       const intervalId = setInterval(fetchUserBalance, 60000);
       return () => clearInterval(intervalId);
-    }
-  }, [currentUser?.id, setUser]);
-
-  // Handle userLogin events
+    }  }, [currentUser?.id, setUser]);  
+  
+  // Handle userLogin events  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handleUserLogin = (event) => {
       console.log("Navbar detected login:", event.detail);

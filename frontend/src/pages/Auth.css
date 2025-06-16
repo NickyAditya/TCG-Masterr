@@ -83,6 +83,23 @@
     color: var(--gray-2);
 }
 
+/* Password toggle icon styling */
+.input-group .password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0px;
+    left: 22rem;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    color: var(--gray-2);
+    cursor: pointer;
+    z-index: 10;
+}
+
+.input-group .password-toggle:hover {
+    color: var(--primary-color);
+}
+
 .input-group input {
     width: 100%;
     padding: 1rem 3rem;
@@ -91,6 +108,11 @@
     border-radius: .5rem;
     border: 0.125rem solid var(--white);
     outline: none;
+}
+
+.input-group input[type="password"],
+.input-group input[type="text"] {
+    padding-right: 3rem; /* Make room for the eye icon */
 }
 
 .input-group input:focus {
@@ -360,9 +382,10 @@
 .error-message {
     background-color: rgba(255, 59, 48, 0.1);
     color: #ff3b30;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    font-size: 0.9rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
     border-left: 3px solid #ff3b30;
+    line-height: 1.2; /* mengurangi tinggi teks */
 }

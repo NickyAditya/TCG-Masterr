@@ -15,23 +15,32 @@ const Auth = () => {
 
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [registerData, setRegisterData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+  
+  // States for password visibility
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user) {
       navigate(user.role === 'admin' ? '/admin' : '/');
       return;
-    }    const container = document.getElementById('auth-container');
+    }    
+    const container = document.getElementById('auth-container');
     setTimeout(() => {
       container.classList.add('sign-in');
     }, 200);
   }, [navigate]);
 
   const toggle = () => {
-    setError('');    const container = document.getElementById('auth-container');
+    setError('');    
+    const container = document.getElementById('auth-container');
     container.classList.toggle('sign-in');
     container.classList.toggle('sign-up');
-  };  const handleLogin = async (e) => {
+  };  
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -92,7 +101,22 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
-  };  return (
+  };  
+
+  // Toggle password visibility functions
+  const toggleLoginPassword = () => {
+    setShowLoginPassword(!showLoginPassword);
+  };
+
+  const toggleRegisterPassword = () => {
+    setShowRegisterPassword(!showRegisterPassword);
+  };
+
+  const toggleRegisterConfirmPassword = () => {
+    setShowRegisterConfirmPassword(!showRegisterConfirmPassword);
+  };
+
+  return (
     <div id="auth-container" className="container">
       <div className="row">
         {/* SIGN UP */}
@@ -125,22 +149,30 @@ const Auth = () => {
                 <div className="input-group">
                   <i className='bx bxs-lock-alt'></i>
                   <input 
-                    type="password" 
+                    type={showRegisterPassword ? "text" : "password"}
                     placeholder="Password" 
                     required
                     value={registerData.password}
                     onChange={e => setRegisterData({ ...registerData, password: e.target.value })}
                   />
+                  <i 
+                    className={`bx ${showRegisterPassword ? 'bx-show' : 'bx-hide'} password-toggle`}
+                    onClick={toggleRegisterPassword}
+                  ></i>
                 </div>
                 <div className="input-group">
                   <i className='bx bxs-lock-alt'></i>
                   <input 
-                    type="password" 
+                    type={showRegisterConfirmPassword ? "text" : "password"}
                     placeholder="Confirm Password" 
                     required
                     value={registerData.confirmPassword}
                     onChange={e => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                   />
+                  <i 
+                    className={`bx ${showRegisterConfirmPassword ? 'bx-show' : 'bx-hide'} password-toggle`}
+                    onClick={toggleRegisterConfirmPassword}
+                  ></i>
                 </div>
                 <button type="submit" disabled={loading}>
                   {loading ? 'Creating Account...' : 'Sign up'}
@@ -174,12 +206,16 @@ const Auth = () => {
                 <div className="input-group">
                   <i className='bx bxs-lock-alt'></i>
                   <input 
-                    type="password" 
+                    type={showLoginPassword ? "text" : "password"}
                     placeholder="Password" 
                     required
                     value={loginData.password}
                     onChange={e => setLoginData({ ...loginData, password: e.target.value })}
                   />
+                  <i 
+                    className={`bx ${showLoginPassword ? 'bx-show' : 'bx-hide'} password-toggle`}
+                    onClick={toggleLoginPassword}
+                  ></i>
                 </div>
                 <button type="submit" disabled={loading}>
                   {loading ? 'Signing In...' : 'Sign in'}
