@@ -10,6 +10,7 @@ import Auth from './pages/Auth';
 import AdminDashboard from './pages/AdminDashboard';
 import Shop from './pages/Shop';
 import Inventory from './pages/Inventory';
+import Balance from './pages/Balance';
 
 // Create a context for user authentication state
 export const AuthContext = createContext(null);
@@ -128,12 +129,21 @@ function App() {
               <Footer />
             </>
           } />
-          
-          <Route path="/inventory" element={
+            <Route path="/inventory" element={
             <ProtectedRoute element={
               <>
                 <Navbar />
                 <Inventory />
+                <Footer />
+              </>
+            } />
+          } />
+
+          <Route path="/balance" element={
+            <ProtectedRoute element={
+              <>
+                <Navbar />
+                <Balance />
                 <Footer />
               </>
             } />

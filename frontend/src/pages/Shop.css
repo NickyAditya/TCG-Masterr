@@ -418,7 +418,7 @@
 /* Cart Icon Styles */
 .cart-icon-container {
   position: fixed;
-  top: 20px;
+  top: 650px;
   right: 20px;
   z-index: 1000;
 }

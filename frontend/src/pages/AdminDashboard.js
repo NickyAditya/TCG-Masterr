@@ -161,6 +161,7 @@ function UserManagement() {
                   <th>Username</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th>Balance</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -176,6 +177,7 @@ function UserManagement() {
                           {user.role}
                         </span>
                       </td>
+                      <td>Rp.{user.balance}</td>
                       <td className="actions">
                         <button className="action-btn edit" onClick={() => openEditModal(user)}>
                           Edit

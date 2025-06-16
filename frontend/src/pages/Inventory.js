@@ -107,10 +107,10 @@ function Inventory() {
         <p>Manage your collection of trading cards</p>
         {/* Login status indicator */}
         <div className="login-status">
-          <span>{isLoggedIn ? `Logged in (User ID: ${userId})` : 'Not logged in'}</span>
-          <button className="check-login-btn" onClick={checkLoginStatus}>
+          {/* <span>{isLoggedIn ? `Logged in (User ID: ${userId})` : 'Not logged in'}</span> */}
+          {/* <button className="check-login-btn" onClick={checkLoginStatus}>
             Refresh Login Status
-          </button>
+          </button> */}
         </div>
       </div>
       

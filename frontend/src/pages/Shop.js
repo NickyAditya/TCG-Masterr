@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import './Shop.css';
+import { AuthContext } from '../App'; // Import the AuthContext
 
 function Shop() {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -12,6 +13,8 @@ function Shop() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [cartTotal, setCartTotal] = useState(0);
+  // Get user context
+  const { user, setUser } = useContext(AuthContext);
   
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -350,24 +353,51 @@ function Shop() {
 
       // Kirim request ke server
       // Coba gunakan endpoint inventory langsung
-      const response = await axios.post('http://localhost:5000/api/inventory/add', orderData);
-      
-      if (response.status === 200 || response.status === 201) {
+      const response = await axios.post('http://localhost:5000/api/inventory/add', orderData);        if (response.status === 200 || response.status === 201) {
         // Jika berhasil, kosongkan cart dan tampilkan pesan sukses
         setCheckoutMessage('Pembelian berhasil! Kartu telah ditambahkan ke inventory Anda');
         clearCart(); // Kosongkan cart setelah checkout berhasil
         
+        // Use the updated balance from server response or fallback to calculation
+        const updatedBalance = response.data.updatedBalance !== undefined
+          ? response.data.updatedBalance
+          : parseFloat(user.balance) - cartTotal;
+        
+        // Update user's balance in context and localStorage
+        if (user && setUser) {
+          // Update user object with the new balance
+          const updatedUser = {
+            ...user,
+            balance: updatedBalance
+          };
+          
+          // Update context and localStorage
+          setUser(updatedUser);
+          console.log('Updated user balance to:', updatedBalance);
+        }
+        
         setTimeout(() => {
           setCartOpen(false); // Tutup modal cart
           setCheckoutMessage('');
-        }, 3000);
-      }    } catch (err) {
+        }, 3000);}
+    } catch (err) {
       console.error('Checkout error:', err);
       console.error('Error details:', err.response?.data || 'No response data');
       
       // Tampilkan pesan yang lebih detail
       if (err.response) {
-        setCheckoutError(`Error (${err.response.status}): ${err.response.data?.message || JSON.stringify(err.response.data)}`);
+        // Special handling for insufficient funds error
+        if (err.response.status === 400 && err.response.data?.message === 'Insufficient funds') {
+          const { balance, required, shortfall } = err.response.data;
+          setCheckoutError(
+            `Saldo tidak mencukupi. Saldo Anda: Rp ${parseFloat(balance).toLocaleString('id-ID')}, ` +
+            `Total belanja: Rp ${parseFloat(required).toLocaleString('id-ID')}, ` +
+            `Kekurangan: Rp ${parseFloat(shortfall).toLocaleString('id-ID')}. ` +
+            `Silakan top up saldo Anda terlebih dahulu.`
+          );
+        } else {
+          setCheckoutError(`Error (${err.response.status}): ${err.response.data?.message || JSON.stringify(err.response.data)}`);
+        }
       } else if (err.request) {
         setCheckoutError('Server tidak merespons. Mohon cek koneksi Anda.');
       } else {
@@ -385,10 +415,10 @@ function Shop() {
         <p>Browse our premium selection of trading cards from Pokémon, Yu-Gi-Oh!, and Magic: The Gathering</p>
         {/* Login status indicator */}
         <div className="login-status">
-          <span>{isLoggedIn ? `Logged in (User ID: ${userId})` : 'Not logged in'}</span>
-          <button className="check-login-btn" onClick={checkLoginStatus}>
+          {/* <span>{isLoggedIn ? `Logged in (User ID: ${userId})` : 'Not logged in'}</span> */}
+          {/* <button className="check-login-btn" onClick={checkLoginStatus}>
             Refresh Login Status
-          </button>
+          </button> */}
         </div>
       </div>
       
@@ -429,7 +459,7 @@ function Shop() {
                   </div>
                   <div className="cart-item-details">
                     <h4>{item.name}</h4>
-                    <p className="cart-item-price">${item.price.toFixed(2)} each</p>
+                    <p className="cart-item-price">Rp.  {item.price.toFixed(2)}</p>
                     <div className="quantity-controls">
                       <button 
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -446,7 +476,7 @@ function Shop() {
                     </div>
                   </div>
                   <div className="cart-item-subtotal">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    Rp.{(item.price * item.quantity).toFixed(2)}
                   </div>
                   <button 
                     className="remove-item"
@@ -461,7 +491,7 @@ function Shop() {
               <div className="cart-summary">
                 <div className="cart-total">
                   <span>Total:</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>Rp.{cartTotal.toFixed(2)}</span>
                 </div>
                 {checkoutMessage && (
                   <div className="checkout-message success">
@@ -575,12 +605,13 @@ function Shop() {
                   <div className="card-details">
                     <h3 className="card-name">{card.name}</h3>
                     <div className="card-meta">
-                      <span className="card-set">{card.set}</span>                      <span className={`card-rarity ${card.rarity ? card.rarity.toLowerCase().replace(' ', '-') : 'common'}`}>
+                      <span className="card-set">{card.set}</span>                      
+                      <span className={`card-rarity ${card.rarity ? card.rarity.toLowerCase().replace(' ', '-') : 'common'}`}>
                         {card.rarity || 'Common'}
                       </span>
                     </div>
                     <div className="card-purchase">
-                      <span className="card-price">${card.price.toFixed(2)}</span>
+                      <span className="card-price">Rp.{card.price.toFixed(2)}</span>
                       <button 
                         className="add-to-cart" 
                         disabled={!card.inStock}
@@ -590,6 +621,7 @@ function Shop() {
                       </button>
                     </div>
                   </div>
+                  
                   <div className="card-game-tag">
                     <span className={`game-tag ${card.category}`}>
                       {card.category === 'pokemon' ? 'Pokémon' : 

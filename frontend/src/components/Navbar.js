@@ -93,9 +93,10 @@ function Navbar() {
               <div className="user-greeting" onClick={toggleDropdown}>
                 Hello, {currentUser.username || currentUser.email}
                 <i className='bx bx-chevron-down'></i>
-              </div>              {isDropdownOpen && (
+              </div>                {isDropdownOpen && (
                 <div className="user-dropdown">
                   <Link to="/inventory" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>Inventory</Link>
+                  <Link to="/balance" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>Saldo</Link>
                   <div className="dropdown-item" onClick={handleLogout}>Logout</div>
                 </div>
               )}
