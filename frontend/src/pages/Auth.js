@@ -1,4 +1,3 @@
-// src/pages/Auth.js
 import React, { useEffect, useState, useContext } from 'react';
 import './Auth.css';
 import './AuthStyles.css'; // Import our scoped styles
@@ -20,6 +19,19 @@ const Auth = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
+  
+  // States for password validation
+  const [passwordValidation, setPasswordValidation] = useState({
+    minLength: false,
+    hasUppercase: false,
+    hasNumber: false
+  });
+  
+  // State to track if all password requirements are met
+  const [allRequirementsMet, setAllRequirementsMet] = useState(false);
+  
+  // Track if password field has been focused at least once
+  const [passwordTouched, setPasswordTouched] = useState(false);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -33,12 +45,53 @@ const Auth = () => {
     }, 200);
   }, [navigate]);
 
+  // Validate password as user types
+  useEffect(() => {
+    const password = registerData.password;
+    
+    const validations = {
+      minLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasNumber: /[0-9]/.test(password)
+    };
+    
+    setPasswordValidation(validations);
+    
+    // Check if all requirements are met
+    const requirementsMet = 
+      validations.minLength && 
+      validations.hasUppercase && 
+      validations.hasNumber;
+    
+    setAllRequirementsMet(requirementsMet);
+  }, [registerData.password]);
+
   const toggle = () => {
     setError('');    
     const container = document.getElementById('auth-container');
     container.classList.toggle('sign-in');
     container.classList.toggle('sign-up');
+    
+    // Reset password validation states when toggling
+    setPasswordTouched(false);
+    setAllRequirementsMet(false);
   };  
+
+  // Simplify error messages to minimum text
+  const getSimplifiedError = (err) => {
+    if (!err.response) return 'Connection error';
+    
+    const message = err.response.data?.message || '';
+    
+    // Common error messages - make them very short
+    if (message.includes('User not found')) return 'User not found';
+    if (message.includes('Invalid password')) return 'Wrong password';
+    if (message.includes('already exists')) return 'User already exists';
+    if (message.includes('Email already')) return 'Email already used';
+    
+    // Return a very short version of the original message or generic error
+    return message.slice(0, 25) || 'Error occurred';
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -50,22 +103,20 @@ const Auth = () => {
       const userData = res.data;
 
       // Update the global user state through context
-      // This will also update localStorage and dispatch events
       if (setUser) {
         setUser(userData);
       }
 
-      // Navigate based on user role - do this after setting the user state
-      // This ensures the navbar will already have the updated state when the next page renders
       setTimeout(() => {
         if (userData.role === 'admin') {
           navigate('/admin');
         } else {
           navigate('/');
         }
-      }, 100); // Small delay to ensure state updates first
+      }, 100);
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      // Set very concise error
+      setError(getSimplifiedError(err));
     } finally {
       setLoading(false);
     }
@@ -75,8 +126,15 @@ const Auth = () => {
     e.preventDefault();
     setError('');
 
+    // Validate password requirements
+    const { minLength, hasUppercase, hasNumber } = passwordValidation;
+    if (!minLength || !hasUppercase || !hasNumber) {
+      setError('Password tidak memenuhi persyaratan');
+      return;
+    }
+
     if (registerData.password !== registerData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords tidak sama');
       return;
     }
     
@@ -91,13 +149,16 @@ const Auth = () => {
       });
       
       // Show success message
-      alert('Registration successful! Please login.');
+      alert('Registrasi berhasil! Silakan login.');
       
       // Reset form and toggle to login
       setRegisterData({ username: '', email: '', password: '', confirmPassword: '' });
+      setPasswordTouched(false);
+      setAllRequirementsMet(false);
       toggle();
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      // Set very concise error
+      setError(getSimplifiedError(err));
     } finally {
       setLoading(false);
     }
@@ -116,6 +177,11 @@ const Auth = () => {
     setShowRegisterConfirmPassword(!showRegisterConfirmPassword);
   };
 
+  // Handle password field focus
+  const handlePasswordFocus = () => {
+    setPasswordTouched(true);
+  };
+
   return (
     <div id="auth-container" className="container">
       <div className="row">
@@ -124,7 +190,7 @@ const Auth = () => {
           <div className="form-wrapper align-items-center">
             <div className="form sign-up">
               <h2>Create an Account</h2>
-              {error && <div className="error-message">{error}</div>}
+              {error && <div className="error-message">Error: {error}</div>}
               <form onSubmit={handleRegister}>
                 <div className="input-group">
                   <i className='bx bxs-user'></i>
@@ -154,12 +220,38 @@ const Auth = () => {
                     required
                     value={registerData.password}
                     onChange={e => setRegisterData({ ...registerData, password: e.target.value })}
+                    onFocus={handlePasswordFocus}
                   />
                   <i 
                     className={`bx ${showRegisterPassword ? 'bx-show' : 'bx-hide'} password-toggle`}
                     onClick={toggleRegisterPassword}
                   ></i>
                 </div>
+                
+                {/* Password Validation Checklist - only show if password is touched and not all requirements met */}
+                {passwordTouched && (
+                  <div className={`password-requirements ${allRequirementsMet ? 'fade-out' : 'fade-in'}`}>
+                    {!passwordValidation.minLength && (
+                      <div className="requirement">
+                        <i className='bx bx-x-circle'></i>
+                        <span>Minimal 8 karakter</span>
+                      </div>
+                    )}
+                    {!passwordValidation.hasUppercase && (
+                      <div className="requirement">
+                        <i className='bx bx-x-circle'></i>
+                        <span>Minimal 1 huruf besar</span>
+                      </div>
+                    )}
+                    {!passwordValidation.hasNumber && (
+                      <div className="requirement">
+                        <i className='bx bx-x-circle'></i>
+                        <span>Minimal 1 angka</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
                 <div className="input-group">
                   <i className='bx bxs-lock-alt'></i>
                   <input 
@@ -174,7 +266,10 @@ const Auth = () => {
                     onClick={toggleRegisterConfirmPassword}
                   ></i>
                 </div>
-                <button type="submit" disabled={loading}>
+                <button 
+                  type="submit" 
+                  disabled={loading || !allRequirementsMet || registerData.password !== registerData.confirmPassword}
+                >
                   {loading ? 'Creating Account...' : 'Sign up'}
                 </button>
               </form>
@@ -191,7 +286,7 @@ const Auth = () => {
           <div className="form-wrapper align-items-center">
             <div className="form sign-in">
               <h2>Welcome Back</h2>
-              {error && <div className="error-message">{error}</div>}
+              {error && <div className="error-message">Error: {error}</div>}
               <form onSubmit={handleLogin}>
                 <div className="input-group">
                   <i className='bx bxs-user'></i>

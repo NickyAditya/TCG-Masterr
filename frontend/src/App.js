@@ -15,6 +15,17 @@ import Balance from './pages/Balance';
 // Create a context for user authentication state
 export const AuthContext = createContext(null);
 
+// Styling untuk menghilangkan jarak
+const noGapStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+}
+
+const componentStyle = {
+  margin: 0,
+  padding: 0,
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -116,20 +127,29 @@ function App() {
           <Route path="/" element={
             <>
               {user?.role !== 'admin' && <Navbar />}
-              <Hero />
-              <CarouselCards />
-              <Features />
+              {/* Container untuk menghilangkan gap */}
+              <div style={noGapStyle}>
+                <div style={componentStyle}>
+                  <CarouselCards /> {/* 1. Carousel pertama */}
+                </div>
+                <div style={componentStyle}>
+                  <Hero /> {/* 2. Hero kedua */}
+                </div>
+                <div style={componentStyle}>
+                  <Features /> {/* 3. Features ketiga */}
+                </div>
+              </div>
               <Footer />
             </>
           } />
-            <Route path="/shop" element={
+          <Route path="/shop" element={
             <>
               {user?.role !== 'admin' && <Navbar />}
               <Shop />
               <Footer />
             </>
           } />
-            <Route path="/inventory" element={
+          <Route path="/inventory" element={
             <ProtectedRoute element={
               <>
                 <Navbar />

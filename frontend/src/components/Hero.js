@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import './Hero.css'; 
+import { Link } from 'react-router-dom';
 
 function Hero() {
   return (
@@ -12,7 +13,7 @@ function Hero() {
       <div className="hero-content">
         <h1>Selamat datang di <span>TCG Master</span></h1>
         <p>Pusat jual beli kartu Pokemon, Yu-Gi-Oh!, dan MTG terbaik di Indonesia.</p>
-        <button className="btn">Mulai Jelajah</button>
+        <button className="btn" ><Link to="/shop" >Mulai Jelajah</Link></button>
       </div>
     </motion.div>
   );

@@ -207,18 +207,21 @@ body {
 .hero {
   text-align: center;
   padding: 100px 20px;
-  background: linear-gradient(120deg, #ffce00, #f26d00);
+  background: #ffffff;
   color: white;
-  min-height: 60vh;
+  min-height: 40vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
+  margin-top: 0; /* Hilangkan margin top */
+  padding-top: 80px; /* Kurangi padding top */
 }
 
 .hero-content {
   max-width: 800px;
   margin: 0 auto;
+  color: #1e1e1e;
 }
 
 .hero span {
@@ -226,11 +229,12 @@ body {
   font-weight: bold;
 }
 
-.hero .btn {
+.hero .btn,
+.hero .btn * {
   margin-top: 20px;
   padding: 12px 24px;
   background: #1e1e1e;
-  color: white;
+  color: white !important;
   border: none;
   cursor: pointer;
   font-size: 16px;
