@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const userRoutes = require("./routes/users");
 const cardRoutes = require("./routes/cards");
 const inventoryRoutes = require("./routes/inventory");
+const transactionRoutes = require("./routes/transactions");
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/cards", cardRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/users/inventory", inventoryRoutes); // Endpoint untuk akses inventory user
+app.use("/api/transactions", transactionRoutes); // Endpoint untuk akses log transaksi
 
 const db = mysql.createConnection({
   host: "localhost",

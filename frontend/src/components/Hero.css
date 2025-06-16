@@ -123,6 +123,20 @@ body {
   padding: 5px 10px;
   border-radius: 4px;
   transition: background-color 0.2s;
+  position: relative;
+}
+
+.user-balance {
+  display: inline-block;
+  color: #ffffff;
+  background-color: #28a745;
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-left: 10px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .user-greeting:hover {

@@ -10,7 +10,6 @@ function Navbar() {
   const navigate = useNavigate();
   // Get user state from context
   const { user, setUser } = useContext(AuthContext);
-
   // Effect to sync the local user state with props and localStorage
   useEffect(() => {
     if (user) {
@@ -30,6 +29,38 @@ function Navbar() {
       }
     }
   }, [user, setUser]);
+  
+  // Effect to fetch the latest user balance from the server
+  useEffect(() => {
+    if (currentUser && currentUser.id) {
+      // Fetch latest user data including balance
+      const fetchUserBalance = async () => {
+        try {
+          const response = await fetch(`http://localhost:5000/api/users/${currentUser.id}`);
+          if (response.ok) {
+            const userData = await response.json();
+            // Only update if balance is different to avoid unnecessary rerenders
+            if (userData.balance !== currentUser.balance) {
+              const updatedUser = {
+                ...currentUser,
+                balance: userData.balance
+              };
+              setCurrentUser(updatedUser);
+              // Update in context/localStorage if needed
+              if (setUser) setUser(updatedUser);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user balance:", error);
+        }
+      };
+      
+      fetchUserBalance();
+      // Set up a periodic refresh every 60 seconds
+      const intervalId = setInterval(fetchUserBalance, 60000);
+      return () => clearInterval(intervalId);
+    }
+  }, [currentUser?.id, setUser]);
 
   // Handle userLogin events
   useEffect(() => {
@@ -88,12 +119,15 @@ function Navbar() {
         <li><Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link></li>
         
         {currentUser ? (
-          <>
-            <li className="user-dropdown-container">
+          <>            <li className="user-dropdown-container">
               <div className="user-greeting" onClick={toggleDropdown}>
                 Hello, {currentUser.username || currentUser.email}
                 <i className='bx bx-chevron-down'></i>
-              </div>                {isDropdownOpen && (
+                {currentUser.balance !== undefined && (
+                  <span className="user-balance">Rp. {parseFloat(currentUser.balance).toLocaleString('id-ID')}</span>
+                )}
+              </div>
+              {isDropdownOpen && (
                 <div className="user-dropdown">
                   <Link to="/inventory" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>Inventory</Link>
                   <Link to="/balance" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>Saldo</Link>

@@ -26,12 +26,20 @@ function AdminDashboard() {
         >
           Cards
         </Link>
+        <Link 
+          to="/admin/transactions" 
+          className={`admin-tab ${activeTab === 'transactions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transactions')}
+        >
+          Transactions
+        </Link>
       </div>
       
       <Routes>
         <Route path="/" element={<UserManagement />} />
         <Route path="/users" element={<UserManagement />} />
         <Route path="/cards" element={<CardManagement />} />
+        <Route path="/transactions" element={<TransactionManagement />} />
       </Routes>
     </div>
   );
@@ -727,6 +735,349 @@ function CardManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Transaction Management Component
+function TransactionManagement() {
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [currentTransaction, setCurrentTransaction] = useState(null);
+  const [transactionItems, setTransactionItems] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  
+  // Load transactions on component mount
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+  
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5000/api/transactions');
+      setTransactions(response.data);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+      setError('Failed to load transactions. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const viewTransactionDetails = async (transaction) => {
+    setCurrentTransaction(transaction);
+    setLoadingDetails(true);
+    
+    try {
+      const response = await axios.get(`http://localhost:5000/api/transactions/${transaction.id}`);
+      setTransactionItems(response.data);
+      setShowDetails(true);
+    } catch (err) {
+      console.error('Error fetching transaction details:', err);
+      setError('Failed to load transaction details.');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+  
+  const closeDetails = () => {
+    setShowDetails(false);
+    setCurrentTransaction(null);
+    setTransactionItems([]);
+  };
+  
+  const updateTransactionStatus = async (id, newStatus) => {
+    try {
+      await axios.put(`http://localhost:5000/api/transactions/${id}/status`, { status: newStatus });
+      
+      // Update the transaction in the local state
+      setTransactions(prevTransactions => 
+        prevTransactions.map(t => 
+          t.id === id ? { ...t, status: newStatus } : t
+        )
+      );
+      
+      if (currentTransaction && currentTransaction.id === id) {
+        setCurrentTransaction({ ...currentTransaction, status: newStatus });
+      }
+      
+    } catch (err) {
+      console.error('Error updating transaction status:', err);
+      setError('Failed to update transaction status.');
+    }
+  };
+  
+  // Filter functions
+  const getFilteredTransactions = () => {
+    return transactions.filter(transaction => {
+      // Filter by status
+      if (filterStatus !== 'all' && transaction.status !== filterStatus) {
+        return false;
+      }
+      
+      // Filter by date range
+      if (filterDateFrom) {
+        const fromDate = new Date(filterDateFrom);
+        const transactionDate = new Date(transaction.transaction_date);
+        if (transactionDate < fromDate) {
+          return false;
+        }
+      }
+      
+      if (filterDateTo) {
+        const toDate = new Date(filterDateTo);
+        toDate.setHours(23, 59, 59, 999); // End of the day
+        const transactionDate = new Date(transaction.transaction_date);
+        if (transactionDate > toDate) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  };
+  
+  // Format date for display
+  const formatDate = (dateString) => {
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    };
+    return new Date(dateString).toLocaleDateString('id-ID', options);
+  };
+
+  return (
+    <div className="transaction-management">
+      <div className="admin-header">
+        <h1>Transaction Logs</h1>
+      </div>
+      
+      <div className="admin-content">
+        <div className="content-header">
+          <h2>Transaction History</h2>
+          <div className="filters">
+            <div className="filter-group">
+              <label>Status:</label>
+              <select 
+                value={filterStatus} 
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>From:</label>
+              <input 
+                type="date" 
+                value={filterDateFrom} 
+                onChange={(e) => setFilterDateFrom(e.target.value)} 
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label>To:</label>
+              <input 
+                type="date" 
+                value={filterDateTo} 
+                onChange={(e) => setFilterDateTo(e.target.value)} 
+              />
+            </div>
+            
+            <button 
+              className="admin-btn" 
+              onClick={() => {
+                setFilterStatus('all');
+                setFilterDateFrom('');
+                setFilterDateTo('');
+              }}
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+        
+        {error && <div className="error-message">{error}</div>}
+        
+        {loading ? (
+          <div className="loading">Loading transactions...</div>
+        ) : (
+          <div className="table-responsive">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>User</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredTransactions().length > 0 ? (
+                  getFilteredTransactions().map(transaction => (
+                    <tr key={transaction.id}>
+                      <td>{transaction.id}</td>
+                      <td>{transaction.username} (ID: {transaction.user_id})</td>
+                      <td>{formatDate(transaction.transaction_date)}</td>
+                      <td>Rp. {parseFloat(transaction.total_amount).toLocaleString('id-ID')}</td>
+                      <td>
+                        <span className={`status-badge ${transaction.status}`}>
+                          {transaction.status}
+                        </span>
+                      </td>
+                      <td className="actions">
+                        <button 
+                          className="action-btn view" 
+                          onClick={() => viewTransactionDetails(transaction)}
+                        >
+                          Details
+                        </button>
+                        <div className="status-actions">
+                          <select 
+                            value={transaction.status}
+                            onChange={(e) => updateTransactionStatus(transaction.id, e.target.value)}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="no-data">
+                      No transactions found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      
+      {/* Transaction Details Modal */}
+      {showDetails && currentTransaction && (
+        <div className="modal-overlay">
+          <div className="modal transaction-details-modal">
+            <div className="modal-header">
+              <h2>Transaction Details</h2>
+              <button className="close-btn" onClick={closeDetails}>×</button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="transaction-info">
+                <div className="info-row">
+                  <strong>Transaction ID:</strong> 
+                  <span>{currentTransaction.id}</span>
+                </div>
+                <div className="info-row">
+                  <strong>User:</strong> 
+                  <span>{currentTransaction.username} (ID: {currentTransaction.user_id})</span>
+                </div>
+                <div className="info-row">
+                  <strong>Date:</strong> 
+                  <span>{formatDate(currentTransaction.transaction_date)}</span>
+                </div>
+                <div className="info-row">
+                  <strong>Status:</strong> 
+                  <span className={`status-badge ${currentTransaction.status}`}>
+                    {currentTransaction.status}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <strong>Total Amount:</strong> 
+                  <span>Rp. {parseFloat(currentTransaction.total_amount).toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+              
+              <h3>Items</h3>
+              
+              {loadingDetails ? (
+                <div className="loading">Loading details...</div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Card</th>
+                        <th>Game</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transactionItems.length > 0 ? (
+                        transactionItems.map(item => (
+                          <tr key={item.id}>
+                            <td className="card-info">
+                              {item.image && (
+                                <img 
+                                  src={item.image} 
+                                  alt={item.name}
+                                  onError={(e) => e.target.src = "/images/cards/card-placeholder.jpg"}
+                                  className="card-thumb"
+                                />
+                              )}
+                              <span>{item.name}</span>
+                            </td>
+                            <td>{item.game}</td>
+                            <td>{item.quantity}</td>
+                            <td>Rp. {parseFloat(item.price).toLocaleString('id-ID')}</td>
+                            <td>Rp. {(item.quantity * item.price).toLocaleString('id-ID')}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="no-data">
+                            No items found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                className={`btn status-btn-${currentTransaction.status === 'completed' ? 'completed' : 'pending'}`}
+                onClick={() => {
+                  const newStatus = currentTransaction.status === 'completed' ? 'pending' : 'completed';
+                  updateTransactionStatus(currentTransaction.id, newStatus);
+                }}
+              >
+                {currentTransaction.status === 'completed' ? 'Mark as Pending' : 'Mark as Completed'}
+              </button>
+              <button 
+                className="btn cancel-btn" 
+                onClick={closeDetails}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
