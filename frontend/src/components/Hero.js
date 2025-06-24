@@ -12,7 +12,7 @@ function Hero() {
     >
       <div className="hero-content">
         <h1>Selamat datang di <span>TCG Master</span></h1>
-        <p>Pusat jual beli kartu Pokemon, Yu-Gi-Oh!, dan MTG terbaik di Indonesia.</p>
+        <p>Peel the Layers, Trade the Legends</p>
         <button className="btn" ><Link to="/shop" >Mulai Jelajah</Link></button>
       </div>
     </motion.div>
